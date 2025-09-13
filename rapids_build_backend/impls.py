@@ -83,18 +83,24 @@ def _get_cuda_version():
         raise ValueError(
             "Could not determine the CUDA version. Make sure nvcc is in your PATH."
         )
-
     try:
         process_output = subprocess.run(["nvcc", "--version"], capture_output=True)
     except subprocess.CalledProcessError as e:
         raise ValueError("Failed to get version from nvcc.") from e
 
-    output_lines = process_output.stdout.decode().splitlines()
+    output_lines = process_output.stdout.decode()
 
-    match = re.search(r"release (\d+)\.(\d+)", output_lines[3])
-    if match is None:
-        raise ValueError("Failed to parse CUDA version from nvcc output.")
-    return match.groups()
+    if "hpcc" in output_lines:
+        return "hpcc"
+    
+    if "maca" in output_lines:
+        return "maca"
+    # match = re.search(r"release (\d+)\.(\d+)", output_lines[3])
+    # if match is None:
+    #     raise ValueError("Failed to parse CUDA version from nvcc output.")
+    # return match.groups()
+    return "None"
+
 
 
 @lru_cache
@@ -107,9 +113,10 @@ def _get_cuda_suffix() -> str:
         The CUDA suffix (e.g., "-cu12") or an empty string if CUDA could not be
         detected.
     """
-    if (version := _get_cuda_version()) is None:
-        return ""
-    return f"-cu{version[0]}"
+    # if (version := _get_cuda_version()) is None:
+    #     return ""
+    # return f"-maca{version[0]}"
+    return f"-{_get_cuda_version()}"
 
 
 @lru_cache
