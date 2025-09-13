@@ -76,25 +76,31 @@ def _get_cuda_version():
     Returns
     -------
     str or None
-        The CUDA major version (e.g., "11")
+        The CUDA major version (e.g., "12")
     """
     nvcc_exists = subprocess.run(["which", "nvcc"], capture_output=True).returncode == 0
     if not nvcc_exists:
         raise ValueError(
             "Could not determine the CUDA version. Make sure nvcc is in your PATH."
         )
-
     try:
         process_output = subprocess.run(["nvcc", "--version"], capture_output=True)
     except subprocess.CalledProcessError as e:
         raise ValueError("Failed to get version from nvcc.") from e
 
-    output_lines = process_output.stdout.decode().splitlines()
+    output_lines = process_output.stdout.decode()
 
-    match = re.search(r"release (\d+)\.(\d+)", output_lines[3])
-    if match is None:
-        raise ValueError("Failed to parse CUDA version from nvcc output.")
-    return match.groups()
+    if "hpcc" in output_lines:
+        return "hpcc"
+    
+    if "maca" in output_lines:
+        return "maca"
+    # match = re.search(r"release (\d+)\.(\d+)", output_lines[3])
+    # if match is None:
+    #     raise ValueError("Failed to parse CUDA version from nvcc output.")
+    # return match.groups()
+    return "None"
+
 
 
 @lru_cache
@@ -104,13 +110,13 @@ def _get_cuda_suffix() -> str:
     Returns
     -------
     str
-        The CUDA suffix (e.g., "-cu11") or an empty string if CUDA could not be
+        The CUDA suffix (e.g., "-cu12") or an empty string if CUDA could not be
         detected.
     """
-    if (version := _get_cuda_version()) is None:
-        return ""
-    return f"-cu{version[0]}"
-
+    # if (version := _get_cuda_version()) is None:
+    #     return ""
+    # return f"-maca{version[0]}"
+    return f"-{_get_cuda_version()}"
 
 @lru_cache
 def _get_git_commit() -> typing.Union[str, None]:
@@ -170,7 +176,7 @@ def _edit_pyproject(config):
     bkp_pyproject_file = ".pyproject.toml.rapids-build-backend.bak"
 
     if not config.disable_cuda:
-        cuda_version_major, cuda_version_minor = _get_cuda_version()
+        cuda_version_major  = _get_cuda_version()
 
     # "dependencies.yaml" might not exist in sdists and wouldn't need to... so don't
     # raise an exception if that file can't be found when this runs
@@ -207,7 +213,7 @@ def _edit_pyproject(config):
                     continue
                 matrix = _parse_matrix(config.matrix_entry) or dict(file_config.matrix)
                 if not config.disable_cuda:
-                    matrix["cuda"] = [f"{cuda_version_major}.{cuda_version_minor}"]
+                    matrix["cuda"] = [f"{cuda_version_major}"]
                 matrix["arch"] = [_get_arch()]
                 rapids_dependency_file_generator.make_dependency_files(
                     parsed_config=parsed_config,
