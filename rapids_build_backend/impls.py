@@ -198,7 +198,7 @@ def _edit_pyproject(config):
     bkp_pyproject_file = ".pyproject.toml.rapids-build-backend.bak"
 
     if not config.disable_cuda:
-        cuda_version_major, cuda_version_minor = _get_cuda_version()
+        cuda_version_major = _get_cuda_version()
 
     # "dependencies.yaml" might not exist in sdists and wouldn't need to... so don't
     # raise an exception if that file can't be found when this runs
@@ -235,7 +235,7 @@ def _edit_pyproject(config):
                     continue
                 matrix = _parse_matrix(config.matrix_entry) or dict(file_config.matrix)
                 if not config.disable_cuda:
-                    matrix["cuda"] = [f"{cuda_version_major}.{cuda_version_minor}"]
+                    matrix["cuda"] = [f"{cuda_version_major}"]
                 matrix["arch"] = [_get_arch()]
                 rapids_dependency_file_generator.make_dependency_files(
                     parsed_config=parsed_config,

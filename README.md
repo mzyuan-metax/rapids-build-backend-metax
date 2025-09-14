@@ -1,3 +1,9 @@
+## BUILD and Metax
+
+1. Build: python -m build
+2. Install 1: pip install dist/*.whl
+3. Install 2: pip install rapids-build-backend-metax==0.4.1.2 -i https://pypi.org/simple
+
 # RAPIDS PEP517 build backend
 
 `rapids-build-backend` is an adapter around PEP517 builders that provides support for key RAPIDS requirements.
